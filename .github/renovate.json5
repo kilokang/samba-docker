@@ -1,0 +1,33 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "docker": {},
+  "packageRules": [
+    {
+      // Only minor and patch versions are auto-merged, major versions will require a PR.
+      "matchUpdateTypes": ["minor", "patch"],
+      // Exclude any dependencies which are pre-1.0.0 because those can make breaking changes at any time
+      // according to the SemVer spec.
+      "matchCurrentVersion": "!/^(0|v0)/",
+      // Exclude golang dependency so golang version in Docker files is not auto-merged.
+      "automerge": true,
+      "automergeType": "branch",
+      "pruneBranchAfterAutomerge": true
+    }
+  ],
+  "regexManagers": [
+    {
+      // Update Samba tag in the Dockerfile.
+      "fileMatch": [ "^Dockerfile$" ],
+      "datasourceTemplate": "git-tags",
+      "depNameTemplate": "https://git.samba.org/samba.git",
+      "extractVersionTemplate": "^samba-(?<version>.*)$",
+      "versioningTemplate": "loose",
+      "matchStrings": [
+        "ARG SAMBA_VERSION=(?<currentValue>.*)"
+      ]
+    }
+  ]
+}
