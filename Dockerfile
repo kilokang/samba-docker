@@ -64,4 +64,4 @@ RUN apk add gnutls talloc tevent zlib tdb ldb acl jansson libcap liburing openld
 
 COPY --from=build /target/ /
 
-ENTRYPOINT [ "/usr/bin/smbd", "--interactive" ]
+ENTRYPOINT [ "/usr/bin/smbd", "--interactive", "--foreground", "--no-process-group" ]
