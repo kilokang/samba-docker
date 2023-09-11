@@ -1,19 +1,21 @@
-name: Release tagged image
+name: Release image
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - renovate/**
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  release:
+  get-versions:
     name: Build and push image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Extract samba version
         id: samba
         run: |
@@ -28,26 +30,17 @@ jobs:
           echo "bare=v${{ steps.samba.outputs.version }}" >> "$GITHUB_OUTPUT"
           echo "distro=v${{ steps.samba.outputs.version }}-alpine${{ steps.alpine.outputs.version }}" >> "$GITHUB_OUTPUT"
           echo "full=v${{ steps.samba.outputs.version }}-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Build
-        uses: docker/build-push-action@v4
-        with:
-          push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push
-        uses: docker/build-push-action@v4
-        with:
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/samba-docker:${{ steps.tag.outputs.bare }}
-            ghcr.io/${{ github.repository_owner }}/samba-docker:${{ steps.tag.outputs.distro }}
-            ghcr.io/${{ github.repository_owner }}/samba-docker:${{ steps.tag.outputs.full }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    outputs:
+      tags: |
+        ghcr.io/${{ github.repository_owner }}/samba-docker/samba:${{ steps.tag.outputs.bare }}
+        ghcr.io/${{ github.repository_owner }}/samba-docker/samba:${{ steps.tag.outputs.distro }}
+        ghcr.io/${{ github.repository_owner }}/samba-docker/samba:${{ steps.tag.outputs.full }}
+
+  release-image:
+    needs: [ get-versions ]
+    uses: txqueuelen/.github/.github/workflows/common-docker-releaser.yaml@main
+    with:
+      tags: ${{ needs.get-versions.outputs.tags }}
+      push: ${{ github.ref_name == github.event.repository.default_branch }}
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
