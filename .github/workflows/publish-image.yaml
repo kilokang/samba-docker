@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - renovate/**
+  pull_request:
 
 permissions:
   contents: read
