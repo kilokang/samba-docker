@@ -1,4 +1,4 @@
-FROM alpine:3.18.5 AS build
+FROM alpine:3.19.0 AS build
 ARG SAMBA_VERSION=4.18.3
 
 # Deps sourced from https://git.alpinelinux.org/aports/tree/main/samba/APKBUILD
@@ -54,7 +54,7 @@ RUN make -j$((`nproc` - 1))
 RUN make DESTDIR="/target/" install -j$((`nproc` - 1))
 
 
-FROM alpine:3.18.5
+FROM alpine:3.19.0
 ### RUN addgroup -S samba && \
 ###     adduser -S -D -H -h /dev/null -s /sbin/nologin -G samba -g samba samba
 
