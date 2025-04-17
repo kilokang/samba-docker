@@ -1,5 +1,5 @@
 FROM alpine:3.19.1 AS build
-ARG SAMBA_VERSION=4.18.3
+ARG SAMBA_VERSION=4.22.1
 
 # Deps sourced from https://git.alpinelinux.org/aports/tree/main/samba/APKBUILD
 RUN apk add build-base coreutils \
