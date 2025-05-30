@@ -1,37 +1,88 @@
-FROM alpine:3.19.1 AS build
-ARG SAMBA_VERSION=4.18.3
-
-# Deps sourced from https://git.alpinelinux.org/aports/tree/main/samba/APKBUILD
-RUN apk add build-base coreutils \
-            py3-dnspython py3-markdown tdb acl-dev bind-dev cups-dev dbus-dev docbook-xsl \
-            e2fsprogs-dev fuse-dev gnutls-dev iniparser-dev jansson-dev ldb-dev libarchive-dev \
-            libcap-dev libtirpc-dev liburing-dev linux-pam-dev musl-nscd-dev ncurses-dev \
-            openldap-dev perl perl-json perl-parse-yapp popt-dev py3-ldb py3-tdb py3-tevent \
-            python3-dev rpcgen subunit-dev talloc-dev tdb-dev tevent-dev zlib-dev \
-            ceph-dev
-
-
-RUN wget https://download.samba.org/pub/samba/stable/samba-$SAMBA_VERSION.tar.gz -O- | tar xzf -
-WORKDIR samba-$SAMBA_VERSION
-
-ARG MODULES_BUNDLED="!tdb,!talloc,!pytalloc-util,!tevent,!popt,!ldb,!pyldb-util"
+FROM ubuntu:24.04@sha256:6015f66923d7afbc53558d7ccffd325d43b4e249f41a6e93eef074c9505d2233 AS build
+ARG SAMBA_VERSION=4.22.1
 ARG MODULES_AUTH="auth_unix,auth_wbc,auth_server,auth_netlogond,auth_script,auth_samba4"
 ARG MODULES_IDMAP="idmap_ad,idmap_rid,idmap_adex,idmap_hash,idmap_tdb2"
 ARG MODULES_PDB="pdb_tdbsam,pdb_ldap,pdb_ads,pdb_smbpasswd,pdb_wbc_sam,pdb_samba4"
-ARG MODULES_VFS="vfs_acl_xattr,vfs_aio_fork,vfs_aio_pthread,vfs_audit,vfs_btrfs,vfs_cacheprime,vfs_cap,vfs_catia,vfs_ceph,vfs_ceph_snapshots,vfs_commit,vfs_crossrename,vfs_default_quota,vfs_delay_inject,vfs_dfs_samba4,vfs_dirsort,vfs_fileid,vfs_fruit,vfs_full_audit,vfs_io_uring,vfs_nfs4acl_xattr,vfs_offline,vfs_posix_eadb,vfs_preopen,vfs_readahead,vfs_readonly,vfs_recycle,vfs_shadow_copy2,vfs_shell_snap,vfs_snapper,vfs_streams_depot,vfs_streams_xattr,vfs_syncops,vfs_time_audit,vfs_unityed_media,vfs_virusfilter,vfs_widelinks,vfs_worm"
+ARG MODULES_VFS="vfs_acl_xattr,vfs_aio_fork,vfs_aio_pthread,vfs_audit,vfs_btrfs,vfs_cacheprime,vfs_cap,vfs_catia,vfs_ceph,vfs_ceph_snapshots,vfs_commit,vfs_crossrename,vfs_default_quota,vfs_delay_inject,vfs_dfs_samba4,vfs_dirsort,vfs_fileid,vfs_fruit,vfs_full_audit,vfs_io_uring,vfs_nfs4acl_xattr,vfs_offline,vfs_posix_eadb,vfs_preopen,vfs_readahead,vfs_readonly,vfs_recycle,vfs_shadow_copy2,vfs_shell_snap,vfs_snapper,vfs_streams_depot,vfs_streams_xattr,vfs_syncops,vfs_time_audit,vfs_unityed_media,vfs_virusfilter,vfs_widelinks,vfs_worm,vfs_zfs"
+
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
+    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+    apt-get -y update && \
+    apt-get -y install curl
+
+RUN curl -sSL https://download.samba.org/pub/samba/stable/samba-$SAMBA_VERSION.tar.gz | tar xzf -
+WORKDIR samba-$SAMBA_VERSION
+
+# Deps sourced from https://gitlab.com/samba-team/samba/-/blob/5a582bddd834fffe2b27cc8b2e9468fa84dfc6f2/bootstrap/generated-dists/ubuntu2404/packages.yml
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
+    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+    apt-get -y install \
+    bison \
+    build-essential \
+    flex \
+    glusterfs-common \
+    gnutls-bin \
+    heimdal-multidev \
+    krb5-config \
+    krb5-kdc \
+    krb5-user \
+    libacl1-dev \
+    libarchive-dev \
+    libattr1-dev \
+    libblkid-dev \
+    libbsd-dev \
+    libcap-dev \
+    libcephfs-dev \
+    libclang-dev \
+    libcups2-dev \
+    libevent-dev \
+    libglib2.0-dev \
+    libgnutls28-dev \
+    libicu-dev \
+    libjansson-dev \
+    libkeyutils-dev \
+    libkrb5-dev \
+    libldap2-dev \
+    liblmdb-dev \
+    libparse-yapp-perl \
+    libpcap-dev \
+    libpopt-dev \
+    libreadline-dev \
+    libssl-dev \
+    libtasn1-bin \
+    libtasn1-dev \
+    libunwind-dev \
+    liburing-dev \
+    libutf8proc-dev \
+    lmdb-utils \
+    pkg-config \
+    python3 \
+    python3-cryptography \
+    python3-dbg \
+    python3-dev \
+    python3-dnspython \
+    python3-gpg \
+    python3-iso8601 \
+    python3-markdown \
+    python3-pyasn1 \
+    python3-requests \
+    python3-setproctitle \
+    xfslibs-dev \
+    zlib1g-dev
 
 RUN ./configure --jobs=$((`nproc` - 1)) \
     --enable-fhs \
     --prefix=/usr \
+    --sysconfdir=/etc \
     --sbindir=/usr/bin \
-    --libexecdir=/usr/lib \
-    --sysconfdir=/etc/samba \
-    --with-configdir=/etc/samba \
+    --libdir=/usr/lib \
+    --libexecdir=/usr/lib/samba \
     --localstatedir=/var \
+    --with-configdir=/etc/samba \
     --with-lockdir=/var/cache/samba \
-    --with-logfilebase=/var/log/samba \
-    --with-sockets-dir=/run/samba \
+    --with-sockets-dir=/run \
     --with-piddir=/run \
+    --with-logfilebase=/var/log/samba \
     \
     --without-gettext \
     --without-gpgme \
@@ -48,17 +99,29 @@ RUN ./configure --jobs=$((`nproc` - 1)) \
     --enable-ceph-reclock \
     --with-smb1-server \
     \
-    --bundled-libraries="$MODULES_BUNDLED" \
+    --bundled-libraries=ALL \
     --with-shared-modules="$MODULES_AUTH,$MODULES_IDMAP,$MODULES_PDB,$MODULES_VFS"
+
 RUN make -j$((`nproc` - 1))
 RUN make DESTDIR="/target/" install -j$((`nproc` - 1))
 
 
-FROM alpine:3.19.1
-### RUN addgroup -S samba && \
-###     adduser -S -D -H -h /dev/null -s /sbin/nologin -G samba -g samba samba
+FROM ubuntu:24.04@sha256:6015f66923d7afbc53558d7ccffd325d43b4e249f41a6e93eef074c9505d2233
 
-RUN apk add gnutls talloc tevent zlib tdb ldb acl jansson libcap liburing openldap popt
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
+    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+    apt-get -y update && \
+    apt-get -y install binutils
+
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
+    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+    apt-get -y update && \
+    apt-get -y install \
+    libbsd0 \
+    libicu74 \
+    libjansson4 \
+    libkeyutils1 \
+    libldap2
 
 COPY --from=build /target/ /
 
