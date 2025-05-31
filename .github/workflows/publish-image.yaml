@@ -21,21 +21,21 @@ jobs:
         id: samba
         run: |
           echo "version=$(sed -nr 's/^ARG SAMBA_VERSION=(.*)$/\1/p' Dockerfile)" >> "$GITHUB_OUTPUT"
-      - name: Extract alpine version
-        id: alpine
+      - name: Extract ubuntu version
+        id: ubuntu
         run: |
-          echo "version=$(grep -oE 'alpine:([^ ]+)' Dockerfile | head -1 | cut -d: -f2)" >> "$GITHUB_OUTPUT"
+          echo "version=$(grep -oE 'ubuntu:([^ ]+)' Dockerfile | head -1 | sed -e 's_ubuntu:\(.*\)@sha256:.*_\1_')"
       - name: Generate tag
         id: tag
         run: |
           echo "bare=v${{ steps.samba.outputs.version }}" >> "$GITHUB_OUTPUT"
-          echo "distro=v${{ steps.samba.outputs.version }}-alpine${{ steps.alpine.outputs.version }}" >> "$GITHUB_OUTPUT"
+          echo "distro=v${{ steps.samba.outputs.version }}-ubuntu${{ steps.ubuntu.outputs.version }}" >> "$GITHUB_OUTPUT"
           echo "full=v${{ steps.samba.outputs.version }}-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
     outputs:
       tags: |
-        ghcr.io/${{ github.repository_owner }}/samba-docker/samba:${{ steps.tag.outputs.bare }}
-        ghcr.io/${{ github.repository_owner }}/samba-docker/samba:${{ steps.tag.outputs.distro }}
-        ghcr.io/${{ github.repository_owner }}/samba-docker/samba:${{ steps.tag.outputs.full }}
+        ghcr.io/${{ github.repository_owner }}/samba-docker:${{ steps.tag.outputs.bare }}
+        ghcr.io/${{ github.repository_owner }}/samba-docker:${{ steps.tag.outputs.distro }}
+        ghcr.io/${{ github.repository_owner }}/samba-docker:${{ steps.tag.outputs.full }}
 
   release-image:
     needs: [ get-versions ]
