@@ -24,7 +24,7 @@ jobs:
       - name: Extract ubuntu version
         id: ubuntu
         run: |
-          echo "version=$(grep -oE 'ubuntu:([^ ]+)' Dockerfile | head -1 | sed -e 's_ubuntu:\(.*\)@sha256:.*_\1_')"
+          echo "version=$(grep -oE 'ubuntu:([^ ]+)' Dockerfile | head -1 | sed -e 's_ubuntu:\(.*\)@sha256:.*_\1_')" >> "$GITHUB_OUTPUT"
       - name: Generate tag
         id: tag
         run: |
