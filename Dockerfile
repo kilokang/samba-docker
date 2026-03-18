@@ -1,5 +1,5 @@
 FROM ubuntu:24.04@sha256:0d39fcc8335d6d74d5502f6df2d30119ff4790ebbb60b364818d5112d9e3e932 AS build
-ARG SAMBA_VERSION=4.23.4
+ARG SAMBA_VERSION=4.24.0
 ARG MODULES_AUTH="auth_unix,auth_wbc,auth_server,auth_netlogond,auth_script,auth_samba4"
 ARG MODULES_IDMAP="idmap_ad,idmap_rid,idmap_adex,idmap_hash,idmap_tdb2"
 ARG MODULES_PDB="pdb_tdbsam,pdb_ldap,pdb_ads,pdb_smbpasswd,pdb_wbc_sam,pdb_samba4"
