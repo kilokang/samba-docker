@@ -1,4 +1,4 @@
-FROM ubuntu:24.04@sha256:d78ab76437b1afc5f01e223d6bf0172763f404bb166441328845adbef44518cb AS build
+FROM ubuntu:24.04@sha256:33ceb71981b602c1a7443a53469e4dba065f7503eab3078a2d7a57a2ab987517 AS build
 ARG SAMBA_VERSION=4.24.5
 ARG MODULES_AUTH="auth_unix,auth_wbc,auth_server,auth_netlogond,auth_script,auth_samba4"
 ARG MODULES_IDMAP="idmap_ad,idmap_rid,idmap_adex,idmap_hash,idmap_tdb2"
@@ -106,7 +106,7 @@ RUN make -j$((`nproc` - 1))
 RUN make DESTDIR="/target/" install -j$((`nproc` - 1))
 
 
-FROM ubuntu:24.04@sha256:d78ab76437b1afc5f01e223d6bf0172763f404bb166441328845adbef44518cb
+FROM ubuntu:24.04@sha256:33ceb71981b602c1a7443a53469e4dba065f7503eab3078a2d7a57a2ab987517
 
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
